@@ -184,6 +184,7 @@ static int32_t prehook_load_state_index(
 
     trace("state path=\"%s\", slot=\"%s\"\n", state_path, buf);
     pfn((void *)myhook.var.system.base, buf, d0, d1, shot_only);
+    return 0;
 }
 
 #if defined(UT)
