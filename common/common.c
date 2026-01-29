@@ -588,7 +588,7 @@ int get_path_by_idx(const char *folder, const int idx, char *buf, const int full
     int r = -1;
     int cnt = 0;
     DIR *d = NULL;
-    char tmp[MAX_PATH + 32] = { 0 };
+    char tmp[MAX_PATH + 32];
     struct dirent *dir = NULL;
 
     trace("call %s(folder=%p, idx=%d, buf=%p, fullpath=%d)\n", __func__, folder, idx, buf, fullpath);
@@ -599,7 +599,7 @@ int get_path_by_idx(const char *folder, const int idx, char *buf, const int full
     }
 
     buf[0] = 0;
-    sprintf(tmp, "%s/%s", myconfig.home, folder);
+    snprintf(tmp, sizeof(tmp), "%s/%s", myconfig.home, folder);
     trace("enum folder=\"%s\"\n", tmp);
 
     d = opendir(tmp);
