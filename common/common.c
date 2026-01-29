@@ -47,28 +47,28 @@ TEST_TEAR_DOWN(common)
 }
 #endif
 
-uint64_t get_tick_count_ms(void)
+inline uint64_t get_tick_count_ms(void)
 {
-    struct timespec ts = { 0 };
+    struct timespec ts;
 
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (ts.tv_sec * 1000ULL) + (ts.tv_nsec / 1000000ULL);
 }
 
-int read_file(const char *path, void *buf, int len)
+int read_file(const char * restrict path, void * restrict buf, const int len)
 {
     int r = 0;
     int fd = -1;
 
     trace("call %s(path=%p, buf=%p, len=%d)\n", __func__, path, buf, len);
 
-    if (!path || !buf || !len) {
+    if (UNLIKELY(!path || !buf || !len)) {
         error("invalid input\n");
         return -1;
     }
 
     fd = open(path, O_RDONLY);
-    if (fd < 0) {
+    if (UNLIKELY(fd < 0)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -96,21 +96,21 @@ TEST(common, read_file)
 }
 #endif
 
-int write_file(const char *path, const void *buf, int len)
+int write_file(const char * restrict path, const void * restrict buf, const int len)
 {
     int r = 0;
     int fd = -1;
 
     trace("call %s(path=%p, buf=%p, len=%d)\n", __func__, path, buf, len);
 
-    if (!path || !buf) {
+    if (UNLIKELY(!path || !buf)) {
         error("invalid input\n");
         return -1;
     }
 
     unlink(path);
     fd = open(path, O_CREAT | O_WRONLY, 0644);
-    if (fd < 0) {
+    if (UNLIKELY(fd < 0)) {
         error("failed to create \"%s\"\n", path);
         return -1;
     }
@@ -137,17 +137,17 @@ TEST(common, write_file)
 }
 #endif
 
-int write_log(const char *msg, const char *fmt, ...)
+int write_log(const char * const msg, const char * const fmt, ...)
 {
     static int need_init = 1;
 
     FILE *file = fopen(LOG_FILE, need_init ? "w" : "a+");
 
-    if (NULL == file) {
+    if (UNLIKELY(NULL == file)) {
         return -1;
     }
 
-    if (!msg || !fmt) {
+    if (UNLIKELY(!msg || !fmt)) {
         return -1;
     }
 
@@ -231,7 +231,7 @@ TEST(common, reset_config)
 }
 #endif
 
-int get_debug_level(int local_var)
+PURE_FUNCTION int get_debug_level(int local_var)
 {
     int r = FATAL_LEVEL;
     const char *level = NULL;
@@ -288,7 +288,7 @@ TEST(common, update_debug_level)
 }
 #endif
 
-int load_config(const char *home_path)
+HOT_FUNCTION int load_config(const char *home_path)
 {
     int err = 0;
     struct stat st = { 0 };
@@ -407,7 +407,7 @@ TEST(common, load_config)
 }
 #endif
 
-int update_config(const char *path)
+HOT_FUNCTION int update_config(const char *path)
 {
     int ret = 0;
     char buf[MAX_PATH] = { 0 };
@@ -524,11 +524,11 @@ TEST(common, update_config)
 int drop_bios_files(const char *path)
 {
     int ret = 0;
-    char buf[MAX_PATH] = { 0 };
+    char buf[MAX_PATH];
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
@@ -583,27 +583,27 @@ TEST(common, drop_bios_files)
 }
 #endif
 
-int get_path_by_idx(const char *folder, int idx, char *buf, int fullpath)
+int get_path_by_idx(const char *folder, const int idx, char *buf, const int fullpath)
 {
     int r = -1;
     int cnt = 0;
     DIR *d = NULL;
-    char tmp[MAX_PATH + 32] = { 0 };
+    char tmp[MAX_PATH + 32];
     struct dirent *dir = NULL;
 
     trace("call %s(folder=%p, idx=%d, buf=%p, fullpath=%d)\n", __func__, folder, idx, buf, fullpath);
 
-    if (!folder || !buf) {
+    if (UNLIKELY(!folder || !buf)) {
         error("invalid parameters\n");
         return r;
     }
 
     buf[0] = 0;
-    sprintf(tmp, "%s/%s", myconfig.home, folder);
+    snprintf(tmp, sizeof(tmp), "%s/%s", myconfig.home, folder);
     trace("enum folder=\"%s\"\n", tmp);
 
     d = opendir(tmp);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open dir \"%s\"\n", tmp);
         return r;
     }
@@ -620,13 +620,14 @@ int get_path_by_idx(const char *folder, int idx, char *buf, int fullpath)
             continue;
         }
 
-        if (cnt == idx) {
+        if (UNLIKELY(cnt == idx)) {
             r = 0;
             if (fullpath) {
-                sprintf(buf, "%s/%s/%s", myconfig.home, folder, dir->d_name);
+                snprintf(buf, MAX_PATH, "%s/%s/%s", myconfig.home, folder, dir->d_name);
             }
             else {
-                strcpy(buf, dir->d_name);
+                strncpy(buf, dir->d_name, MAX_PATH - 1);
+                buf[MAX_PATH - 1] = '\0';
             }
             trace("found file \"%s\" at index (%d)\n", buf, idx);
             break;
@@ -659,13 +660,13 @@ int get_dir_cnt(const char *path)
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
 
     d = opendir(path);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -708,13 +709,13 @@ int get_file_cnt(const char *path)
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
 
     d = opendir(path);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -754,7 +755,7 @@ char* upper_string(char *buf)
     char *p = buf;
 
     while (p && *p) {
-        *p = toupper(*p);
+        *p = toupper((unsigned char)*p);
         p += 1;
     }
 
@@ -767,16 +768,15 @@ TEST(common, upper_string)
 }
 #endif
 
-uint32_t rgb565_to_rgb888(uint16_t c)
+uint32_t rgb565_to_rgb888(const uint16_t c)
 {
-    uint32_t r = c & 0x1f;
-    uint32_t b = (c >> 10) & 0x1f;
-    uint32_t g = (c >> 5) & 0x1f;
+    const uint32_t r = c & 0x1f;
+    const uint32_t b = (c >> 10) & 0x1f;
+    const uint32_t g = (c >> 5) & 0x1f;
 
-    r = (r << 3) + (r >> 2);
-    g = (g << 3) + (g >> 2);
-    b = (b << 3) + (b >> 2);
-
-    return (r << 16) | (g << 8) | b;
+    // Optimized expansion: (x << 3) | (x >> 2) equivalent but clearer
+    return ((r << 3) | (r >> 2)) << 16 |
+           ((g << 3) | (g >> 2)) << 8 |
+           ((b << 3) | (b >> 2));
 }
 

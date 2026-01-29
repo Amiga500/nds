@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
@@ -50,7 +51,7 @@ int unlock_area(const void *p)
 
     trace("call %s(p=%p)\n", __func__, p);
 
-    if (!p) {
+    if (UNLIKELY(!p)) {
         error("invalid input\n");
         return r;
     }
@@ -95,11 +96,12 @@ TEST(detour, set_fast_forward)
 }
 #endif
 
+static int prehook_puts(const char *s) __attribute__((unused));
 static int prehook_puts(const char *s)
 {
     trace("call %s(s=%p)\n", __func__, s);
 
-    if (!s) {
+    if (UNLIKELY(!s)) {
         error("invalid input\n");
         return -1;
     }
@@ -116,13 +118,14 @@ TEST(detour, prehook_puts)
 }
 #endif
 
+static int prehook_printf_chk(int flag, const char *fmt, ...) __attribute__((unused));
 static int prehook_printf_chk(int flag, const char *fmt, ...)
 {
     va_list args = { 0 };
 
     trace("call %s(flag=%d, fmt=%p)\n", __func__, flag, fmt);
 
-    if (!fmt) {
+    if (UNLIKELY(!fmt)) {
         error("invalid input\n");
         return -1;
     }
@@ -181,6 +184,7 @@ static int32_t prehook_load_state_index(
 
     trace("state path=\"%s\", slot=\"%s\"\n", state_path, buf);
     pfn((void *)myhook.var.system.base, buf, d0, d1, shot_only);
+    return 0;
 }
 
 #if defined(UT)
@@ -233,6 +237,7 @@ static int32_t prehook_save_state_index(
 
     trace("state path=\"%s\", slot=\"%s\"\n", state_path, buf);
     pfn((void *)myhook.var.system.base, state_path, buf, d0, d1);
+    return 0;
 }
 
 #if defined(UT)
@@ -255,18 +260,18 @@ static void prehook_initialize_backup(
 {
     char *data_file_name = NULL;
     FILE *__stream = NULL;
-    FILE *data_file = NULL;
+    /* Unused: FILE *data_file = NULL; */
     size_t sVar1 = 0;
     long __off = 0;
     uint32_t uVar2 = 0;
-    uint32_t backup_file_size = 0;
+    /* Unused: uint32_t backup_file_size = 0; */
     uint32_t uVar3 = 0;
     void *pvVar4 = NULL;
-    uint8_t *desmume_footer_ptr = NULL;
+    /* Unused: uint8_t *desmume_footer_ptr = NULL; */
     uint8_t uVar5 = 0;
-    uint32_t truncate_size = 0;
-    uint32_t desmume_footer_position = 0;
-    uint32_t clean_pages_loaded = 0;
+    /* Unused: uint32_t truncate_size = 0; */
+    /* Unused: uint32_t desmume_footer_position = 0; */
+    /* Unused: uint32_t clean_pages_loaded = 0; */
 
     trace("call %s()\n", __func__);
 
@@ -274,6 +279,10 @@ static void prehook_initialize_backup(
         const int filename_size = MAX_PATH + 32;
 
         data_file_name = malloc(filename_size);
+        if (!data_file_name) {
+            error("failed to allocate memory for data_file_name\n");
+            return;
+        }
         memset(data_file_name, 0, filename_size);
         snprintf(
             data_file_name,
@@ -354,7 +363,7 @@ static void prehook_initialize_backup(
                 }
 
                 if (uVar2 < size) {
-                    uVar3 = uVar2 - 0x400 & ~((int)(uVar2 - 0x400) >> 0x1f);
+                    uVar3 = (uVar2 - 0x400) & (~((int)(uVar2 - 0x400) >> 0x1f));
                     pvVar4 = memmem(
                         data + uVar3,
                         uVar2 - uVar3,
@@ -379,11 +388,11 @@ static void prehook_initialize_backup(
                     memset(
                         backup->dirty_page_bitmap + uVar3,
                         0xff,
-                        ((size + 0x3fff >> 0xe) - uVar3) * 4
+                        (((size + 0x3fff) >> 0xe) - uVar3) * 4
                     );
                 }
                 else {
-                    memset(backup, 0, size + 0x3fff >> 0xe);
+                    memset(backup, 0, (size + 0x3fff) >> 0xe);
                 }
             }
             strncpy(backup->file_path, data_file_name, 0x3ff);
@@ -426,6 +435,13 @@ int save_state(int slot)
 
     d0 = malloc(0x18000);
     d1 = malloc(0x18000);
+
+    if (!d0 || !d1) {
+        error("failed to allocate memory for save state buffers\n");
+        if (d0) free(d0);
+        if (d1) free(d1);
+        return -1;
+    }
 
     do {
         if (!d0 || !d1) {
@@ -486,13 +502,13 @@ TEST(detour, save_state)
 }
 #endif
 
-int load_state(int slot)
+int load_state(const int slot)
 {
     char buf[MAX_PATH] = { 0 };
 
     trace("call %s(slot=%d)\n", __func__, slot);
 
-    if (slot > MAX_STATE_SLOT) {
+    if (UNLIKELY(slot > MAX_STATE_SLOT)) {
         error("invalid slot\n");
         return -1;
     }
@@ -501,10 +517,10 @@ int load_state(int slot)
     return 0;
 #endif
 
-    if (is_state_hooked == 0) {
-        nds_load_state_index pfn = (nds_load_state_index)myhook.fun.load_state_index;
+    if (LIKELY(is_state_hooked == 0)) {
+        const nds_load_state_index pfn = (nds_load_state_index)myhook.fun.load_state_index;
 
-        if (!pfn) {
+        if (UNLIKELY(!pfn)) {
             error("invalid pfn\n");
             return -1;
         }
@@ -512,9 +528,9 @@ int load_state(int slot)
         pfn((void *)myhook.var.system.base, slot, 0, 0, 0);
     }
     else {
-        nds_load_state pfn = (nds_load_state)myhook.fun.load_state;
+        const nds_load_state pfn = (nds_load_state)myhook.fun.load_state;
 
-        if (!pfn) {
+        if (UNLIKELY(!pfn)) {
             error("invalid pfn\n");
             return -1;
         }
@@ -567,6 +583,7 @@ TEST(detour, quit_drastic)
 }
 #endif
 
+static int patch_drastic64(uint64_t pos, uint64_t pfn) __attribute__((unused));
 static int patch_drastic64(uint64_t pos, uint64_t pfn)
 {
     #define LEN         16
@@ -579,7 +596,7 @@ static int patch_drastic64(uint64_t pos, uint64_t pfn)
     uint8_t src[LEN] = { 0 };
     uint8_t dst[LEN] = { 0x42, 0x00, 0x00, 0x58, 0x40, 0x00, 0x1f, 0xd6 };
 
-    trace("call %s(pos=0x%lx, pfn=0x%lx)\n", __func__, pos, pfn);
+    trace("call %s(pos=0x%" PRIx64 ", pfn=0x%" PRIx64 ")\n", __func__, pos, pfn);
 
     snprintf(buf, sizeof(buf), "/tmp/%s", DRASTIC64);
     trace("patch the target file (\"%s\")\n", buf);
@@ -603,7 +620,7 @@ static int patch_drastic64(uint64_t pos, uint64_t pfn)
     dst[14] = (uint8_t)(pfn >> 48);
     dst[15] = (uint8_t)(pfn >> 56);
 
-    trace("org 0x%04lx: "
+    trace("org 0x%04" PRIx64 ": "
         "%02x %02x %02x %02x "
         "%02x %02x %02x %02x "
         "%02x %02x %02x %02x "
@@ -612,7 +629,7 @@ static int patch_drastic64(uint64_t pos, uint64_t pfn)
         src[0], src[1], src[2], src[3], src[4], src[5], src[6], src[7],
         src[8], src[9], src[10], src[11], src[12], src[13], src[14], src[15]
     );
-    trace("new 0x%04lx: "
+    trace("new 0x%04" PRIx64 ": "
         "%02x %02x %02x %02x "
         "%02x %02x %02x %02x "
         "%02x %02x %02x %02x "
@@ -625,7 +642,7 @@ static int patch_drastic64(uint64_t pos, uint64_t pfn)
     if (memcmp(src, dst, LEN)) {
         fseek(fp, pos, SEEK_SET);
         len = fwrite(dst, 1, LEN, fp);
-        trace("patched drastic64 at 0x%lx successfully\n", pos);
+        trace("patched drastic64 at 0x%" PRIx64 " successfully\n", pos);
     }
     else {
         r = 0;
@@ -909,7 +926,7 @@ int init_hook(const char *home, size_t page, const char *path)
 {
     page_size = page;
 
-    trace("call %s(home=%p, page=%ld, path=\"%s\")\n", __func__, home, page, path);
+    trace("call %s(home=%p, page=%zu, path=\"%s\")\n", __func__, home, page, path);
 
     if (!home || !page) {
         error("invalid input");
@@ -1002,7 +1019,7 @@ int toggle_micphone(void)
     myhook.use_mic ^= 1;
     if (myhook.use_mic) {
         int cc = 0;
-        int16_t *p = (uint16_t *)myhook.var.system.spu.audio->capture_buffer;
+        int16_t *p = (int16_t *)myhook.var.system.spu.audio->capture_buffer;
 
         *myhook.var.capture_handle = 1;
         *myhook.var.system.micphone_status = 2;
@@ -1020,6 +1037,7 @@ int toggle_micphone(void)
             sizeof(int16_t) * buf_size
         );
     }
+    return 0;
 }
 
 #if defined(UT)

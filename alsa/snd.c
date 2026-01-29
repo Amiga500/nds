@@ -8,10 +8,14 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <syslog.h>
 #include <json-c/json.h>
 #include <alsa/output.h>
 #include <alsa/input.h>
@@ -21,10 +25,6 @@
 #include <alsa/pcm.h>
 #include <linux/rtc.h>
 #include <linux/soundcard.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/time.h>
-#include <syslog.h>
 
 #if defined(FXTEC_QX1000) || defined(MOTO_XT894) || defined(MOTO_XT897) || defined(UT)
 #include <pulse/pulseaudio.h>
@@ -84,7 +84,7 @@ static int dsp_fd = -1;
 
 extern nds_hook myhook;
 
-static int cur_vol = 0;
+static int cur_vol __attribute__((unused)) = 0;
 static pthread_t thread = { 0 };
 
 static queue_t queue = { 0 };
@@ -159,7 +159,7 @@ static void prehook_audio_buffer_force_feed(audio_struct *audio)
 #if USE_CIRCLE_QUEUE
     int iVar2;
     uint32_t uVar1 = 0;
-    snd_pcm_sframes_t frames_available = 0;
+    /* Unused: snd_pcm_sframes_t frames_available = 0; */
     snd_pcm_t *pcm_handle = SND_PCM_STREAM_PLAYBACK;
 
     uVar1 = snd_pcm_avail(pcm_handle);
@@ -187,12 +187,12 @@ static void prehook_adpcm_decode_block(spu_channel_struct *channel)
     uint32_t uVar3 = 0;
     uint32_t uVar4 = 0;
     uint32_t sample_delta = 0;
-    uint32_t current_index = 0;
-    uint32_t adpcm_data_x8 = 0;
-    uint32_t adpcm_cache_block_offset = 0;
-    uint32_t adpcm_step = 0;
+    /* Unused: uint32_t current_index = 0; */
+    /* Unused: uint32_t adpcm_data_x8 = 0; */
+    /* Unused: uint32_t adpcm_cache_block_offset = 0; */
+    /* Unused: uint32_t adpcm_step = 0; */
     uint32_t uVar5 = 0;
-    int32_t sample = 0;
+    /* Unused: int32_t sample = 0; */
     int16_t *psVar6 = NULL;
     int16_t *psVar7 = NULL;
     int16_t *adpcm_step_table = NULL;
@@ -394,7 +394,7 @@ TEST(alsa, open_dsp)
 
 static int init_queue(queue_t *q, size_t s)
 {
-    trace("call %s(q=%p, s=%ld)\n", __func__, q, s);
+    trace("call %s(q=%p, s=%zu)\n", __func__, q, s);
 
     if (!q) {
         error("q is null\n");
@@ -536,7 +536,7 @@ static int put_queue(queue_t *q, uint8_t *buf, size_t size)
     int tmp = 0;
     int avai = 0;
 
-    trace("call %s(q=%p, buf=%p, size=%ld)\n", __func__, q, buf, size);
+    trace("call %s(q=%p, buf=%p, size=%zu)\n", __func__, q, buf, size);
 
     if (!q || !buf) {
         error("invalid parameters\n");
@@ -549,13 +549,13 @@ static int put_queue(queue_t *q, uint8_t *buf, size_t size)
 
     pthread_mutex_lock(&q->lock);
     avai = get_available_wsize(q);
-    if (size > avai) {
+    if ((int)size > avai) {
         size = avai;
     }
     r = size;
 
     if (size > 0) {
-        if ((q->wsize >= q->rsize) && ((q->wsize + size) > q->size)) {
+        if ((q->wsize >= q->rsize) && ((q->wsize + (int)size) > q->size)) {
             tmp = q->size - q->wsize;
             size-= tmp;
 
@@ -601,7 +601,7 @@ static size_t get_queue(queue_t *q, uint8_t *buf, size_t len)
     int avai = 0;
     int size = len;
 
-    trace("call %s(q=%p, buf=%p, max=%ld)\n", __func__, q, buf, len);
+    trace("call %s(q=%p, buf=%p, max=%zu)\n", __func__, q, buf, len);
 
     if (!q || !buf) {
         error("invalid parameters\n");
@@ -728,7 +728,7 @@ TEST(alsa, audio_handler)
 
 snd_pcm_sframes_t snd_pcm_avail(snd_pcm_t *pcm)
 {
-    trace("call %s(pcm=%ld)\n", __func__, (uintptr_t)pcm);
+    trace("call %s(pcm=%p)\n", __func__, (void *)pcm);
 
     if ((uintptr_t)pcm == SND_PCM_STREAM_CAPTURE) {
         trace("capture flush (use_mic=%d)\n", myhook.use_mic);
@@ -942,7 +942,7 @@ TEST(alsa, snd_pcm_open)
 
 int snd_pcm_prepare(snd_pcm_t *pcm)
 {
-    trace("call %s(pcm=%ld)\n", __func__, (uintptr_t)pcm);
+    trace("call %s(pcm=%p)\n", __func__, (void *)pcm);
 
     return 0;
 }
@@ -956,7 +956,7 @@ TEST(alsa, snd_pcm_prepare)
 
 snd_pcm_sframes_t snd_pcm_readi(snd_pcm_t *pcm, void *buf, snd_pcm_uframes_t size)
 {
-    trace("call %s(pcm=%ld, buf=%p, size=%ld)\n", __func__, (uintptr_t)pcm, buf, size);
+    trace("call %s(pcm=%p, buf=%p, size=%lu)\n", __func__, (void *)pcm, buf, (unsigned long)size);
 
     return 0;
 }
@@ -1327,7 +1327,7 @@ snd_pcm_sframes_t snd_pcm_writei(snd_pcm_t *pcm, const void *buf, snd_pcm_uframe
     return size;
 #endif
 
-    if ((size > 1) && (size != mypcm.len)) {
+    if ((size > 1) && ((int)size != mypcm.len)) {
         put_queue(&queue, (uint8_t*)buf, size * 2 * SND_CHANNELS);
     }
     return size;

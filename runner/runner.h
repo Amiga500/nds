@@ -53,7 +53,7 @@ typedef struct {
     SDL_Rect drt;
 
     uint8_t buf[R_LCD_W * R_LCD_H * 4];
-} shm_buf_t;
+} CACHE_ALIGNED shm_buf_t;
  
 typedef struct {
     struct {
@@ -97,7 +97,7 @@ typedef struct {
         int fd;
         shm_buf_t *buf;
     } shm;
-} runner_t;
+} CACHE_ALIGNED runner_t;
 
 #endif
 

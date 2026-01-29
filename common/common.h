@@ -4,6 +4,24 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+// Compiler optimization hints
+#define LIKELY(x)       __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)     __builtin_expect(!!(x), 0)
+
+// Cache line alignment for ARM Cortex-A7 (64 bytes)
+#define CACHE_LINE_SIZE 64
+#define CACHE_ALIGNED   __attribute__((aligned(CACHE_LINE_SIZE)))
+
+// Function attributes for optimization
+#define HOT_FUNCTION    __attribute__((hot))
+#define COLD_FUNCTION   __attribute__((cold))
+#define PURE_FUNCTION   __attribute__((pure))
+#define CONST_FUNCTION  __attribute__((const))
+#define NORETURN        __attribute__((noreturn))
+
+// Loop optimization hints
+#define LOOP_UNROLL     __attribute__((optimize("unroll-loops")))
+
 #define NDS_W           256
 #define NDS_H           192
 #define NDS_Wx2         (NDS_W << 1)
@@ -168,6 +186,18 @@ extern int nds_debug_level;
     printf(__VA_ARGS__);                        \
     exit(-1);                                   \
 } while(0);
+#endif
+
+// Assert macro for debug builds
+#if defined(DEBUG)
+#define NDS_ASSERT(cond, msg) do {              \
+    if (UNLIKELY(!(cond))) {                    \
+        fatal("Assertion failed: %s at %s:%d\n",\
+              msg, __FILE__, __LINE__);         \
+    }                                           \
+} while(0);
+#else
+#define NDS_ASSERT(cond, msg) ((void)0)
 #endif
 
 typedef enum {

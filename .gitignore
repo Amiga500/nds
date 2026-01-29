@@ -8,6 +8,20 @@ drastic/drastic64
 drastic/config/drastic.cf2
 drastic/launch.sh
 drastic/lib/
+drastic/vol
+drastic/cpuclock
+drastic/14nds
+drastic/run.sh
+drastic/runner
+drastic/icon.png
+drastic/rerun
+drastic/restore
+drastic/savestates/
+drastic/config.json
+drastic/backup/
+drastic/overlayfs.img
+drastic/drastic64_patched
+drastic/input_capture_crash.ir
 
 sdl2/Makefile
 sdl2/Makefile.rules

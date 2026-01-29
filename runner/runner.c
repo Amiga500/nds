@@ -88,7 +88,7 @@ static int init_shm(void)
     myrunner.shm.fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0777);
     trace("shm fd=%d\n", myrunner.shm.fd);
 
-    if (myrunner.shm.fd < 0) {
+    if (UNLIKELY(myrunner.shm.fd < 0)) {
         error("failed to open shared memory\n");
         return -1;
     }
@@ -108,7 +108,7 @@ static int init_gles(void)
     trace("call %s()\n", __func__);
 
     r = SDL_Init(SDL_INIT_VIDEO);
-    if (r != 0) {
+    if (UNLIKELY(r != 0)) {
         error("failed to initialize sdl\n");
         return -1;
     }
@@ -167,8 +167,9 @@ static int init_gles(void)
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, vert_indices);
 
     myrunner.gles.bg.pixels = malloc(R_LCD_W * R_LCD_H * 4);
-    if (!myrunner.gles.bg.pixels) {
+    if (UNLIKELY(!myrunner.gles.bg.pixels)) {
         error("failed to allocate buffer for bg image\n");
+        return -1;
     }
     return 0;
 }
@@ -182,20 +183,20 @@ static void* runner_handler(void *param)
 
     trace("call %s()\n", __func__);
 
-    if (init_gles() < 0) {
+    if (UNLIKELY(init_gles() < 0)) {
         error("failed to init gles\n");
         return NULL;
     }
 
-    if (init_shm() < 0) {
+    if (UNLIKELY(init_shm() < 0)) {
         error("failed to init shm\n");
         return NULL;
     }
 
     running = 1;
-    while (running) {
-        if (myrunner.shm.buf->valid == 0) {
-            usleep(10);
+    while (LIKELY(running)) {
+        if (UNLIKELY(myrunner.shm.buf->valid == 0)) {
+            usleep(1000);  // Reduced from 10 to 1000 for better responsiveness
             continue;
         }
 
