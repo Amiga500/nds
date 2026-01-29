@@ -968,7 +968,7 @@ DeleteHIDDeviceWrapper(SDL_hid_device *device)
         pDst->var = NULL; \
     }
 
-static void
+static void __attribute__((unused))
 CopyHIDDeviceInfo(struct SDL_hid_device_info *pSrc, struct SDL_hid_device_info *pDst)
 {
     COPY_IF_EXISTS(path)
