@@ -50,7 +50,7 @@ int unlock_area(const void *p)
 
     trace("call %s(p=%p)\n", __func__, p);
 
-    if (!p) {
+    if (UNLIKELY(!p)) {
         error("invalid input\n");
         return r;
     }
@@ -99,7 +99,7 @@ static int prehook_puts(const char *s)
 {
     trace("call %s(s=%p)\n", __func__, s);
 
-    if (!s) {
+    if (UNLIKELY(!s)) {
         error("invalid input\n");
         return -1;
     }
@@ -122,7 +122,7 @@ static int prehook_printf_chk(int flag, const char *fmt, ...)
 
     trace("call %s(flag=%d, fmt=%p)\n", __func__, flag, fmt);
 
-    if (!fmt) {
+    if (UNLIKELY(!fmt)) {
         error("invalid input\n");
         return -1;
     }

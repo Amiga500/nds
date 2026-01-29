@@ -55,20 +55,20 @@ inline uint64_t get_tick_count_ms(void)
     return (ts.tv_sec * 1000ULL) + (ts.tv_nsec / 1000000ULL);
 }
 
-int read_file(const char *path, void *buf, int len)
+int read_file(const char *path, void *buf, const int len)
 {
     int r = 0;
     int fd = -1;
 
     trace("call %s(path=%p, buf=%p, len=%d)\n", __func__, path, buf, len);
 
-    if (!path || !buf || !len) {
+    if (UNLIKELY(!path || !buf || !len)) {
         error("invalid input\n");
         return -1;
     }
 
     fd = open(path, O_RDONLY);
-    if (fd < 0) {
+    if (UNLIKELY(fd < 0)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -103,14 +103,14 @@ int write_file(const char *path, const void *buf, const int len)
 
     trace("call %s(path=%p, buf=%p, len=%d)\n", __func__, path, buf, len);
 
-    if (!path || !buf) {
+    if (UNLIKELY(!path || !buf)) {
         error("invalid input\n");
         return -1;
     }
 
     unlink(path);
     fd = open(path, O_CREAT | O_WRONLY, 0644);
-    if (fd < 0) {
+    if (UNLIKELY(fd < 0)) {
         error("failed to create \"%s\"\n", path);
         return -1;
     }
@@ -143,11 +143,11 @@ int write_log(const char * const msg, const char * const fmt, ...)
 
     FILE *file = fopen(LOG_FILE, need_init ? "w" : "a+");
 
-    if (NULL == file) {
+    if (UNLIKELY(NULL == file)) {
         return -1;
     }
 
-    if (!msg || !fmt) {
+    if (UNLIKELY(!msg || !fmt)) {
         return -1;
     }
 
@@ -231,7 +231,7 @@ TEST(common, reset_config)
 }
 #endif
 
-int get_debug_level(int local_var)
+PURE_FUNCTION int get_debug_level(int local_var)
 {
     int r = FATAL_LEVEL;
     const char *level = NULL;
@@ -288,7 +288,7 @@ TEST(common, update_debug_level)
 }
 #endif
 
-int load_config(const char *home_path)
+HOT_FUNCTION int load_config(const char *home_path)
 {
     int err = 0;
     struct stat st = { 0 };
@@ -407,7 +407,7 @@ TEST(common, load_config)
 }
 #endif
 
-int update_config(const char *path)
+HOT_FUNCTION int update_config(const char *path)
 {
     int ret = 0;
     char buf[MAX_PATH] = { 0 };

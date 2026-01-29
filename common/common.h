@@ -4,6 +4,19 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+// Compiler optimization hints
+#define LIKELY(x)       __builtin_expect(!!(x), 1)
+#define UNLIKELY(x)     __builtin_expect(!!(x), 0)
+
+// Cache line alignment for ARM Cortex-A7 (64 bytes)
+#define CACHE_LINE_SIZE 64
+#define CACHE_ALIGNED   __attribute__((aligned(CACHE_LINE_SIZE)))
+
+// Function attributes for optimization
+#define HOT_FUNCTION    __attribute__((hot))
+#define COLD_FUNCTION   __attribute__((cold))
+#define PURE_FUNCTION   __attribute__((pure))
+
 #define NDS_W           256
 #define NDS_H           192
 #define NDS_Wx2         (NDS_W << 1)
