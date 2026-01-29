@@ -16,6 +16,11 @@
 #define HOT_FUNCTION    __attribute__((hot))
 #define COLD_FUNCTION   __attribute__((cold))
 #define PURE_FUNCTION   __attribute__((pure))
+#define CONST_FUNCTION  __attribute__((const))
+#define NORETURN        __attribute__((noreturn))
+
+// Loop optimization hints
+#define LOOP_UNROLL     __attribute__((optimize("unroll-loops")))
 
 #define NDS_W           256
 #define NDS_H           192
@@ -181,6 +186,18 @@ extern int nds_debug_level;
     printf(__VA_ARGS__);                        \
     exit(-1);                                   \
 } while(0);
+#endif
+
+// Assert macro for debug builds
+#if defined(DEBUG)
+#define NDS_ASSERT(cond, msg) do {              \
+    if (UNLIKELY(!(cond))) {                    \
+        fatal("Assertion failed: %s at %s:%d\n",\
+              msg, __FILE__, __LINE__);         \
+    }                                           \
+} while(0);
+#else
+#define NDS_ASSERT(cond, msg) ((void)0)
 #endif
 
 typedef enum {

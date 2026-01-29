@@ -2,6 +2,7 @@ export MOD=miyoo_mini
 export NDS_GCC=1
 export NDS_ALSA=1
 
+# Base optimization flags
 CFLAGS  += -O3
 CFLAGS  += -DMIYOO_MINI
 CFLAGS  += -Wl,--no-undefined
@@ -12,11 +13,21 @@ CFLAGS  += -ffast-math
 CFLAGS  += -march=armv7-a
 CFLAGS  += -mtune=cortex-a7
 
-# Additional performance optimizations
+# Advanced optimization flags (Phase 1)
 CFLAGS  += -flto
 CFLAGS  += -finline-functions
 CFLAGS  += -funroll-loops
 CFLAGS  += -fomit-frame-pointer
+
+# Additional optimization flags (Phase 3)
+CFLAGS  += -fipa-pta
+CFLAGS  += -ftree-vectorize
+CFLAGS  += -fmerge-all-constants
+
+# Warning flags for code quality
+CFLAGS  += -Wall
+CFLAGS  += -Wextra
+CFLAGS  += -Wno-unused-parameter
 
 CFLAGS  += -I../inc/mini
 
@@ -37,3 +48,11 @@ include Makefile.base
 .PHONY: scp
 scp:
 	scp drastic/lib/* onion@192.168.1.108:/mnt/SDCARD/Emu/drastic/lib/
+
+# Build variants for testing
+.PHONY: debug
+debug: CFLAGS += -g -O0 -DDEBUG
+debug: all
+
+.PHONY: release
+release: all

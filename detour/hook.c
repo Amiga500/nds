@@ -497,13 +497,13 @@ TEST(detour, save_state)
 }
 #endif
 
-int load_state(int slot)
+int load_state(const int slot)
 {
     char buf[MAX_PATH] = { 0 };
 
     trace("call %s(slot=%d)\n", __func__, slot);
 
-    if (slot > MAX_STATE_SLOT) {
+    if (UNLIKELY(slot > MAX_STATE_SLOT)) {
         error("invalid slot\n");
         return -1;
     }
@@ -512,10 +512,10 @@ int load_state(int slot)
     return 0;
 #endif
 
-    if (is_state_hooked == 0) {
-        nds_load_state_index pfn = (nds_load_state_index)myhook.fun.load_state_index;
+    if (LIKELY(is_state_hooked == 0)) {
+        const nds_load_state_index pfn = (nds_load_state_index)myhook.fun.load_state_index;
 
-        if (!pfn) {
+        if (UNLIKELY(!pfn)) {
             error("invalid pfn\n");
             return -1;
         }
@@ -523,9 +523,9 @@ int load_state(int slot)
         pfn((void *)myhook.var.system.base, slot, 0, 0, 0);
     }
     else {
-        nds_load_state pfn = (nds_load_state)myhook.fun.load_state;
+        const nds_load_state pfn = (nds_load_state)myhook.fun.load_state;
 
-        if (!pfn) {
+        if (UNLIKELY(!pfn)) {
             error("invalid pfn\n");
             return -1;
         }

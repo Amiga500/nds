@@ -55,7 +55,7 @@ inline uint64_t get_tick_count_ms(void)
     return (ts.tv_sec * 1000ULL) + (ts.tv_nsec / 1000000ULL);
 }
 
-int read_file(const char *path, void *buf, const int len)
+int read_file(const char * restrict path, void * restrict buf, const int len)
 {
     int r = 0;
     int fd = -1;
@@ -96,7 +96,7 @@ TEST(common, read_file)
 }
 #endif
 
-int write_file(const char *path, const void *buf, const int len)
+int write_file(const char * restrict path, const void * restrict buf, const int len)
 {
     int r = 0;
     int fd = -1;
@@ -768,16 +768,15 @@ TEST(common, upper_string)
 }
 #endif
 
-static inline uint32_t rgb565_to_rgb888(uint16_t c)
+static inline CONST_FUNCTION uint32_t rgb565_to_rgb888(const uint16_t c)
 {
-    uint32_t r = c & 0x1f;
-    uint32_t b = (c >> 10) & 0x1f;
-    uint32_t g = (c >> 5) & 0x1f;
+    const uint32_t r = c & 0x1f;
+    const uint32_t b = (c >> 10) & 0x1f;
+    const uint32_t g = (c >> 5) & 0x1f;
 
-    r = (r << 3) + (r >> 2);
-    g = (g << 3) + (g >> 2);
-    b = (b << 3) + (b >> 2);
-
-    return (r << 16) | (g << 8) | b;
+    // Optimized expansion: (x << 3) | (x >> 2) equivalent but clearer
+    return ((r << 3) | (r >> 2)) << 16 |
+           ((g << 3) | (g >> 2)) << 8 |
+           ((b << 3) | (b >> 2));
 }
 
