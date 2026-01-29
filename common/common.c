@@ -524,11 +524,11 @@ TEST(common, update_config)
 int drop_bios_files(const char *path)
 {
     int ret = 0;
-    char buf[MAX_PATH] = { 0 };
+    char buf[MAX_PATH];
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
@@ -593,7 +593,7 @@ int get_path_by_idx(const char *folder, const int idx, char *buf, const int full
 
     trace("call %s(folder=%p, idx=%d, buf=%p, fullpath=%d)\n", __func__, folder, idx, buf, fullpath);
 
-    if (!folder || !buf) {
+    if (UNLIKELY(!folder || !buf)) {
         error("invalid parameters\n");
         return r;
     }
@@ -603,7 +603,7 @@ int get_path_by_idx(const char *folder, const int idx, char *buf, const int full
     trace("enum folder=\"%s\"\n", tmp);
 
     d = opendir(tmp);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open dir \"%s\"\n", tmp);
         return r;
     }
@@ -620,13 +620,14 @@ int get_path_by_idx(const char *folder, const int idx, char *buf, const int full
             continue;
         }
 
-        if (cnt == idx) {
+        if (UNLIKELY(cnt == idx)) {
             r = 0;
             if (fullpath) {
-                sprintf(buf, "%s/%s/%s", myconfig.home, folder, dir->d_name);
+                snprintf(buf, MAX_PATH, "%s/%s/%s", myconfig.home, folder, dir->d_name);
             }
             else {
-                strcpy(buf, dir->d_name);
+                strncpy(buf, dir->d_name, MAX_PATH - 1);
+                buf[MAX_PATH - 1] = '\0';
             }
             trace("found file \"%s\" at index (%d)\n", buf, idx);
             break;
@@ -659,13 +660,13 @@ int get_dir_cnt(const char *path)
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
 
     d = opendir(path);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -708,13 +709,13 @@ int get_file_cnt(const char *path)
 
     trace("call %s(path=%p)\n", __func__, path);
 
-    if (!path) {
+    if (UNLIKELY(!path)) {
         error("invalid input\n");
         return -1;
     }
 
     d = opendir(path);
-    if (!d) {
+    if (UNLIKELY(!d)) {
         error("failed to open \"%s\"\n", path);
         return -1;
     }
@@ -749,12 +750,12 @@ TEST(common, get_file_cnt)
 }
 #endif
 
-char* upper_string(char *buf)
+static inline char* upper_string(char *buf)
 {
     char *p = buf;
 
     while (p && *p) {
-        *p = toupper(*p);
+        *p = toupper((unsigned char)*p);
         p += 1;
     }
 
@@ -767,7 +768,7 @@ TEST(common, upper_string)
 }
 #endif
 
-uint32_t rgb565_to_rgb888(uint16_t c)
+static inline uint32_t rgb565_to_rgb888(uint16_t c)
 {
     uint32_t r = c & 0x1f;
     uint32_t b = (c >> 10) & 0x1f;
