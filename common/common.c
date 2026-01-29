@@ -750,7 +750,7 @@ TEST(common, get_file_cnt)
 }
 #endif
 
-static inline char* upper_string(char *buf)
+char* upper_string(char *buf)
 {
     char *p = buf;
 
@@ -768,7 +768,7 @@ TEST(common, upper_string)
 }
 #endif
 
-static inline CONST_FUNCTION uint32_t rgb565_to_rgb888(const uint16_t c)
+uint32_t rgb565_to_rgb888(const uint16_t c)
 {
     const uint32_t r = c & 0x1f;
     const uint32_t b = (c >> 10) & 0x1f;
