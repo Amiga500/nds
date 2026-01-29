@@ -47,9 +47,9 @@ TEST_TEAR_DOWN(common)
 }
 #endif
 
-uint64_t get_tick_count_ms(void)
+inline uint64_t get_tick_count_ms(void)
 {
-    struct timespec ts = { 0 };
+    struct timespec ts;
 
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (ts.tv_sec * 1000ULL) + (ts.tv_nsec / 1000000ULL);
@@ -96,7 +96,7 @@ TEST(common, read_file)
 }
 #endif
 
-int write_file(const char *path, const void *buf, int len)
+int write_file(const char *path, const void *buf, const int len)
 {
     int r = 0;
     int fd = -1;
@@ -137,7 +137,7 @@ TEST(common, write_file)
 }
 #endif
 
-int write_log(const char *msg, const char *fmt, ...)
+int write_log(const char * const msg, const char * const fmt, ...)
 {
     static int need_init = 1;
 
@@ -583,7 +583,7 @@ TEST(common, drop_bios_files)
 }
 #endif
 
-int get_path_by_idx(const char *folder, int idx, char *buf, int fullpath)
+int get_path_by_idx(const char *folder, const int idx, char *buf, const int fullpath)
 {
     int r = -1;
     int cnt = 0;

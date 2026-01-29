@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <syslog.h>
 #include <json-c/json.h>
 #include <alsa/output.h>
 #include <alsa/input.h>
@@ -21,10 +24,6 @@
 #include <alsa/pcm.h>
 #include <linux/rtc.h>
 #include <linux/soundcard.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-#include <sys/time.h>
-#include <syslog.h>
 
 #if defined(FXTEC_QX1000) || defined(MOTO_XT894) || defined(MOTO_XT897) || defined(UT)
 #include <pulse/pulseaudio.h>

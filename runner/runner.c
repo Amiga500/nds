@@ -169,6 +169,7 @@ static int init_gles(void)
     myrunner.gles.bg.pixels = malloc(R_LCD_W * R_LCD_H * 4);
     if (!myrunner.gles.bg.pixels) {
         error("failed to allocate buffer for bg image\n");
+        return -1;
     }
     return 0;
 }
@@ -195,7 +196,7 @@ static void* runner_handler(void *param)
     running = 1;
     while (running) {
         if (myrunner.shm.buf->valid == 0) {
-            usleep(10);
+            usleep(1000);  // Reduced from 10 to 1000 for better responsiveness
             continue;
         }
 

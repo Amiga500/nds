@@ -274,6 +274,10 @@ static void prehook_initialize_backup(
         const int filename_size = MAX_PATH + 32;
 
         data_file_name = malloc(filename_size);
+        if (!data_file_name) {
+            error("failed to allocate memory for data_file_name\n");
+            return;
+        }
         memset(data_file_name, 0, filename_size);
         snprintf(
             data_file_name,
@@ -426,6 +430,13 @@ int save_state(int slot)
 
     d0 = malloc(0x18000);
     d1 = malloc(0x18000);
+
+    if (!d0 || !d1) {
+        error("failed to allocate memory for save state buffers\n");
+        if (d0) free(d0);
+        if (d1) free(d1);
+        return -1;
+    }
 
     do {
         if (!d0 || !d1) {
